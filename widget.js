@@ -1,15 +1,22 @@
-(function() {
-  // === Utility ===
+(function () {
+  // Format date as YYYY-MM-DD
   function formatDate(date) {
     return date.toISOString().split('T')[0];
   }
 
-  // === Step 1: Next 5 working days ===
+  // Get number of working days to block
+  function getBlockedWorkingDayCount() {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour < 8 ? 6 : 5;
+  }
+
+  // Get next N working days from today
   function getNextWorkingDays(count) {
     const today = new Date();
     let workingDays = [];
     let current = new Date(today);
-    
+
     while (workingDays.length < count) {
       current.setDate(current.getDate() + 1);
       const day = current.getDay();
@@ -17,78 +24,80 @@
         workingDays.push(new Date(current));
       }
     }
+
     return workingDays.map(formatDate);
   }
 
-  // === Step 2: Public holidays in NZ (2025–2029) ===
+  // NZ public holidays: static and Matariki for 2025–2029
   const nzHolidays = [
-    // STATIC HOLIDAYS (most do not shift on weekends)
-    "01-01", // New Year's Day
-    "01-02", // Day after New Year's
-    "02-06", // Waitangi Day
-    "04-25", // ANZAC Day
-    "06-01", // King's Birthday (1st Monday of June, simplified as June 1 fallback)
-    "10-28", // Labour Day (last Monday of October, simplified here)
-    "12-25", // Christmas Day
-    "12-26", // Boxing Day
-
-    // Matariki (variable date, manually included below for each year)
-    "2025-06-20",
-    "2026-07-10",
-    "2027-06-25",
-    "2028-07-14",
-    "2029-07-06",
+    "01-01", "01-02", "02-06", "04-25", "06-01", "10-28", "12-25", "12-26",
+    "2025-06-20", "2026-07-10", "2027-06-25", "2028-07-14", "2029-07-06"
   ];
 
-  // Function to expand yyyy-MM-dd and yyyy-MM-dd format holidays for each year
   function getHolidayDates() {
     const today = new Date();
-    const startYear = today.getFullYear();
-    const years = Array.from({length: 5}, (_, i) => startYear + i);
-
+    const currentYear = today.getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => currentYear + i);
     let holidays = [];
 
     for (let year of years) {
       for (let h of nzHolidays) {
-        if (h.includes("-")) {
-          // Already a full YYYY-MM-DD (Matariki)
-          if (h.startsWith(year.toString())) {
-            holidays.push(h);
-          } else if (h.length === 5) {
-            // MM-DD — add year
-            holidays.push(`${year}-${h}`);
-          }
+        if (h.length === 5) {
+          holidays.push(`${year}-${h}`);
+        } else if (h.startsWith(`${year}`)) {
+          holidays.push(h);
         }
       }
-
-      // Add dynamic holidays if desired later (e.g. Easter)
     }
-
     return holidays;
   }
 
-  // === Collect all dates to disable ===
-  const disableDates = [
-    ...getNextWorkingDays(5),
-    ...getHolidayDates()
-  ];
+  // Get flatpickr date disabling rules
+  function getDisableRules(blockedDates, minSelectableDateStr, publicHolidays) {
+    return [
+      function (date) {
+        const ymd = formatDate(date);
 
-  // === Initialize calendar ===
+        // Disable weekends
+        const day = date.getDay();
+        if (day === 0 || day === 6) return true;
+
+        // Disable past or too-early dates
+        if (ymd < minSelectableDateStr) return true;
+
+        // Disable blocked working days
+        if (blockedDates.includes(ymd)) return true;
+
+        // Disable public holidays
+        if (publicHolidays.includes(ymd)) return true;
+
+        return false; // date is allowed
+      }
+    ];
+  }
+
+  // Initialize logic
+  const blockCount = getBlockedWorkingDayCount();
+  const blockedDates = getNextWorkingDays(blockCount);
+  const minSelectableDateStr = formatDate(new Date(new Date(blockedDates[blockedDates.length - 1]).setDate(new Date(blockedDates[blockedDates.length - 1]).getDate() + 1)));
+  const publicHolidays = getHolidayDates();
+
+  // Setup Flatpickr
   const calendarInput = document.getElementById("calendar");
   const calendar = flatpickr(calendarInput, {
-    disable: disableDates,
+    disable: getDisableRules(blockedDates, minSelectableDateStr, publicHolidays),
     dateFormat: "Y-m-d",
-    onChange: function(selectedDates, dateStr, instance) {
+    onChange: function (selectedDates, dateStr) {
       if (typeof JFCustomWidget !== "undefined") {
         JFCustomWidget.sendData(dateStr);
       }
     }
   });
 
-  // === Jotform init ===
+  // Jotform widget integration
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.init({
-      onSubmit: function() {
+      onSubmit: function () {
         const selected = calendarInput.value;
         JFCustomWidget.sendSubmit(selected);
       }
