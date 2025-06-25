@@ -9,15 +9,16 @@
   }
 
   function getNextWorkingDays(count) {
-    const days = [];
-    let d = new Date();
-    while (days.length < count) {
-      d.setDate(d.getDate() + 1);
-      if (d.getDay() !== 0 && d.getDay() !== 6) {
-        days.push(formatDate(new Date(d)));
+    const workingDays = [];
+    let current = new Date();
+    while (workingDays.length < count) {
+      current.setDate(current.getDate() + 1);
+      const day = current.getDay();
+      if (day !== 0 && day !== 6) {
+        workingDays.push(formatDate(new Date(current)));
       }
     }
-    return days;
+    return workingDays;
   }
 
   const nzHolidays = [
@@ -26,19 +27,19 @@
   ];
 
   function getHolidayDates() {
-    const year = new Date().getFullYear();
+    const baseYear = new Date().getFullYear();
     const holidays = [];
     for (let i = 0; i < 5; i++) {
-      const y = year + i;
+      const y = baseYear + i;
       nzHolidays.forEach(h => holidays.push(h.length === 5 ? `${y}-${h}` : h));
     }
     return holidays;
   }
 
   const blocked = getNextWorkingDays(getBlockedWorkingDayCount());
-  const minDate = new Date(blocked[blocked.length - 1]);
-  minDate.setDate(minDate.getDate() + 1);
-  const minDateStr = formatDate(minDate);
+  const minDateObj = new Date(blocked[blocked.length - 1]);
+  minDateObj.setDate(minDateObj.getDate() + 1);
+  const minDateStr = formatDate(minDateObj);
   const holidays = getHolidayDates();
 
   const disableDates = [
@@ -56,16 +57,9 @@
 
   const input = document.getElementById("calendar");
 
-  const calendar = flatpickr(input, {
+  flatpickr(input, {
     disable: disableDates,
     dateFormat: "Y-m-d",
-    appendTo: document.body, // ensure calendar is outside iframe container
-    onOpen: function () {
-      const popup = document.querySelector(".flatpickr-calendar");
-      if (popup && !popup.parentNode.isSameNode(document.body)) {
-        document.body.appendChild(popup);
-      }
-    },
     onChange: function (selectedDates, dateStr) {
       if (typeof JFCustomWidget !== "undefined") {
         JFCustomWidget.sendData(dateStr);
@@ -74,8 +68,9 @@
   });
 
   if (typeof JFCustomWidget !== "undefined") {
+    // Set height to match the calendar popup
     JFCustomWidget.init({
-      height: 50, // hard-set to avoid Jotform resizing
+      height: 360,
       onSubmit: function () {
         JFCustomWidget.sendSubmit(input.value);
       }
