@@ -1,25 +1,23 @@
 (function () {
   function formatDate(date) {
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split("T")[0];
   }
 
   function getBlockedWorkingDayCount() {
-    const now = new Date();
-    return now.getHours() < 8 ? 6 : 5;
+    const hour = new Date().getHours();
+    return hour < 8 ? 6 : 5;
   }
 
   function getNextWorkingDays(count) {
-    const today = new Date();
-    const workingDays = [];
-    let current = new Date(today);
-    while (workingDays.length < count) {
-      current.setDate(current.getDate() + 1);
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) {
-        workingDays.push(new Date(current));
+    const days = [];
+    let d = new Date();
+    while (days.length < count) {
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() !== 0 && d.getDay() !== 6) {
+        days.push(formatDate(new Date(d)));
       }
     }
-    return workingDays.map(formatDate);
+    return days;
   }
 
   const nzHolidays = [
@@ -28,49 +26,43 @@
   ];
 
   function getHolidayDates() {
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 5 }, (_, i) => currentYear + i);
-    let dates = [];
-
-    for (let year of years) {
-      for (let h of nzHolidays) {
-        dates.push(h.length === 5 ? `${year}-${h}` : h);
-      }
+    const year = new Date().getFullYear();
+    const holidays = [];
+    for (let i = 0; i < 5; i++) {
+      const y = year + i;
+      nzHolidays.forEach(h => holidays.push(h.length === 5 ? `${y}-${h}` : h));
     }
-    return dates;
+    return holidays;
   }
 
-  function getDisableRules(blocked, minDate, holidays) {
-    return [
-      function (date) {
-        const ymd = formatDate(date);
-        const day = date.getDay();
-        return (
-          day === 0 || day === 6 ||
-          ymd < minDate ||
-          blocked.includes(ymd) ||
-          holidays.includes(ymd)
-        );
-      }
-    ];
-  }
-
-  const blockCount = getBlockedWorkingDayCount();
-  const blockedDates = getNextWorkingDays(blockCount);
-  const minSelectable = new Date(blockedDates[blockedDates.length - 1]);
-  minSelectable.setDate(minSelectable.getDate() + 1);
-  const minDateStr = formatDate(minSelectable);
+  const blocked = getNextWorkingDays(getBlockedWorkingDayCount());
+  const minDate = new Date(blocked[blocked.length - 1]);
+  minDate.setDate(minDate.getDate() + 1);
+  const minDateStr = formatDate(minDate);
   const holidays = getHolidayDates();
+
+  const disableDates = [
+    function (date) {
+      const ymd = formatDate(date);
+      return (
+        date.getDay() === 0 ||
+        date.getDay() === 6 ||
+        ymd < minDateStr ||
+        blocked.includes(ymd) ||
+        holidays.includes(ymd)
+      );
+    }
+  ];
 
   const input = document.getElementById("calendar");
 
   const calendar = flatpickr(input, {
-    disable: getDisableRules(blockedDates, minDateStr, holidays),
+    disable: disableDates,
     dateFormat: "Y-m-d",
+    appendTo: document.body, // ensure calendar is outside iframe container
     onOpen: function () {
-      // move calendar popup to top level
-      const popup = document.querySelector('.flatpickr-calendar');
-      if (popup) {
+      const popup = document.querySelector(".flatpickr-calendar");
+      if (popup && !popup.parentNode.isSameNode(document.body)) {
         document.body.appendChild(popup);
       }
     },
@@ -81,18 +73,9 @@
     }
   });
 
-  // Force outer containers to allow overflow
-  setTimeout(() => {
-    let parent = document.body.parentElement;
-    while (parent) {
-      parent.style.overflow = "visible";
-      parent.style.position = "relative";
-      parent = parent.parentElement;
-    }
-  }, 300);
-
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.init({
+      height: 50, // hard-set to avoid Jotform resizing
       onSubmit: function () {
         JFCustomWidget.sendSubmit(input.value);
       }
