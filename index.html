@@ -6,27 +6,29 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <style>
     html, body {
-      font-family: sans-serif;
-      padding: 10px;
       margin: 0;
+      padding: 10px;
       height: auto;
       overflow: visible;
-      position: relative;
+      font-family: sans-serif;
     }
 
     #calendar {
       width: 100%;
-      z-index: 1;
+      z-index: 2;
     }
 
     .flatpickr-calendar {
+      position: absolute !important;
       z-index: 9999 !important;
+      top: auto !important;
+      left: auto !important;
+      will-change: transform;
     }
   </style>
 </head>
 <body>
-  <input id="calendar" type="text" placeholder="Select a date" />
-
+  <input id="calendar" type="text" placeholder="Select a date Keith" />
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="widget.js"></script>
 </body>
