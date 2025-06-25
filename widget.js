@@ -76,14 +76,15 @@
     ];
   }
 
-  // Initialize logic
+  // Initialization logic
   const blockCount = getBlockedWorkingDayCount();
   const blockedDates = getNextWorkingDays(blockCount);
-  const minSelectableDateStr = formatDate(new Date(new Date(blockedDates[blockedDates.length - 1]).setDate(new Date(blockedDates[blockedDates.length - 1]).getDate() + 1)));
+  const lastBlocked = new Date(blockedDates[blockedDates.length - 1]);
+  const minSelectableDateStr = formatDate(new Date(lastBlocked.setDate(lastBlocked.getDate() + 1)));
   const publicHolidays = getHolidayDates();
 
-  // Setup Flatpickr
   const calendarInput = document.getElementById("calendar");
+
   const calendar = flatpickr(calendarInput, {
     disable: getDisableRules(blockedDates, minSelectableDateStr, publicHolidays),
     dateFormat: "Y-m-d",
@@ -94,7 +95,16 @@
     }
   });
 
-  // Jotform widget integration
+  // Ensure widget container allows calendar to float
+  setTimeout(() => {
+    const container = document.body.parentElement;
+    if (container) {
+      container.style.overflow = 'visible';
+      container.style.position = 'relative';
+    }
+  }, 300);
+
+  // Jotform widget submission hook
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.init({
       onSubmit: function () {
