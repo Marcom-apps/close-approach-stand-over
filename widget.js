@@ -1,22 +1,17 @@
 (function () {
-  // Format date as YYYY-MM-DD
   function formatDate(date) {
     return date.toISOString().split('T')[0];
   }
 
-  // Get number of working days to block
   function getBlockedWorkingDayCount() {
     const now = new Date();
-    const hour = now.getHours();
-    return hour < 8 ? 6 : 5;
+    return now.getHours() < 8 ? 6 : 5;
   }
 
-  // Get next N working days from today
   function getNextWorkingDays(count) {
     const today = new Date();
-    let workingDays = [];
+    const workingDays = [];
     let current = new Date(today);
-
     while (workingDays.length < count) {
       current.setDate(current.getDate() + 1);
       const day = current.getDay();
@@ -24,70 +19,61 @@
         workingDays.push(new Date(current));
       }
     }
-
     return workingDays.map(formatDate);
   }
 
-  // NZ public holidays: static and Matariki for 2025–2029
   const nzHolidays = [
     "01-01", "01-02", "02-06", "04-25", "06-01", "10-28", "12-25", "12-26",
     "2025-06-20", "2026-07-10", "2027-06-25", "2028-07-14", "2029-07-06"
   ];
 
   function getHolidayDates() {
-    const today = new Date();
-    const currentYear = today.getFullYear();
+    const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 5 }, (_, i) => currentYear + i);
-    let holidays = [];
+    let dates = [];
 
     for (let year of years) {
       for (let h of nzHolidays) {
-        if (h.length === 5) {
-          holidays.push(`${year}-${h}`);
-        } else if (h.startsWith(`${year}`)) {
-          holidays.push(h);
-        }
+        dates.push(h.length === 5 ? `${year}-${h}` : h);
       }
     }
-    return holidays;
+    return dates;
   }
 
-  // Get flatpickr date disabling rules
-  function getDisableRules(blockedDates, minSelectableDateStr, publicHolidays) {
+  function getDisableRules(blocked, minDate, holidays) {
     return [
       function (date) {
         const ymd = formatDate(date);
-
-        // Disable weekends
         const day = date.getDay();
-        if (day === 0 || day === 6) return true;
-
-        // Disable past or too-early dates
-        if (ymd < minSelectableDateStr) return true;
-
-        // Disable blocked working days
-        if (blockedDates.includes(ymd)) return true;
-
-        // Disable public holidays
-        if (publicHolidays.includes(ymd)) return true;
-
-        return false; // date is allowed
+        return (
+          day === 0 || day === 6 ||
+          ymd < minDate ||
+          blocked.includes(ymd) ||
+          holidays.includes(ymd)
+        );
       }
     ];
   }
 
-  // Initialization logic
   const blockCount = getBlockedWorkingDayCount();
   const blockedDates = getNextWorkingDays(blockCount);
-  const lastBlocked = new Date(blockedDates[blockedDates.length - 1]);
-  const minSelectableDateStr = formatDate(new Date(lastBlocked.setDate(lastBlocked.getDate() + 1)));
-  const publicHolidays = getHolidayDates();
+  const minSelectable = new Date(blockedDates[blockedDates.length - 1]);
+  minSelectable.setDate(minSelectable.getDate() + 1);
+  const minDateStr = formatDate(minSelectable);
+  const holidays = getHolidayDates();
 
-  const calendarInput = document.getElementById("calendar");
+  const input = document.getElementById("calendar");
 
-  const calendar = flatpickr(calendarInput, {
-    disable: getDisableRules(blockedDates, minSelectableDateStr, publicHolidays),
+  const calendar = flatpickr(input, {
+    disable: getDisableRules(blockedDates, minDateStr, holidays),
     dateFormat: "Y-m-d",
+    onOpen: function () {
+      // move calendar popup to top level
+      const popup = document.querySelector('.flatpickr-calendar');
+      if (popup) {
+        document.body.appendChild(popup);
+      }
+    },
     onChange: function (selectedDates, dateStr) {
       if (typeof JFCustomWidget !== "undefined") {
         JFCustomWidget.sendData(dateStr);
@@ -95,21 +81,20 @@
     }
   });
 
-  // Ensure widget container allows calendar to float
+  // Force outer containers to allow overflow
   setTimeout(() => {
-    const container = document.body.parentElement;
-    if (container) {
-      container.style.overflow = 'visible';
-      container.style.position = 'relative';
+    let parent = document.body.parentElement;
+    while (parent) {
+      parent.style.overflow = "visible";
+      parent.style.position = "relative";
+      parent = parent.parentElement;
     }
   }, 300);
 
-  // Jotform widget submission hook
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.init({
       onSubmit: function () {
-        const selected = calendarInput.value;
-        JFCustomWidget.sendSubmit(selected);
+        JFCustomWidget.sendSubmit(input.value);
       }
     });
   }
