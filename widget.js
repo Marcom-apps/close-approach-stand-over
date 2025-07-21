@@ -57,23 +57,38 @@
 
   const input = document.getElementById("calendar");
 
-  flatpickr(input, {
-    disable: disableDates,
-    dateFormat: "Y-m-d",
-    onChange: function (selectedDates, dateStr) {
-      if (typeof JFCustomWidget !== "undefined") {
-        JFCustomWidget.sendData(dateStr);
-      }
-    }
-  });
-
   if (typeof JFCustomWidget !== "undefined") {
-    // Set height to match the calendar popup
-    JFCustomWidget.init({
-      height: 360,
-      onSubmit: function () {
-        JFCustomWidget.sendSubmit(input.value);
-      }
+    JFCustomWidget.subscribe("ready", function () {
+      JFCustomWidget.requestFrameResize({ height: 40 }); // Initial collapsed height
+
+      flatpickr(input, {
+        disable: disableDates,
+        dateFormat: "Y-m-d",
+
+        onOpen: function () {
+          JFCustomWidget.requestFrameResize({ height: 360 }); // Expand for calendar
+        },
+
+        onClose: function () {
+          JFCustomWidget.requestFrameResize({ height: 40 }); // Collapse
+        },
+
+        onChange: function (selectedDates, dateStr) {
+          JFCustomWidget.sendData(dateStr);
+        }
+      });
+
+      JFCustomWidget.setHeight(40); // Safe initial height
+    });
+
+    JFCustomWidget.onSubmit(function () {
+      JFCustomWidget.sendSubmit(input.value);
+    });
+  } else {
+    // Fallback for local testing
+    flatpickr(input, {
+      disable: disableDates,
+      dateFormat: "Y-m-d"
     });
   }
 })();
