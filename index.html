@@ -10,27 +10,22 @@
       padding: 10px;
       font-family: sans-serif;
       height: 100%;
-      overflow: auto;
+      overflow: hidden; /* prevents scrollbar from flickering on open/close */
     }
 
     #calendar {
       width: 100%;
       padding: 8px;
       font-size: 16px;
-    }
-
-    .flatpickr-calendar {
-      position: static !important;
-      display: block !important;
-      margin-top: 10px;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
   <input id="calendar" type="text" placeholder="Select a date" />
-  <div id="calendar-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
   <script src="widget.js"></script>
 </body>
 </html>
