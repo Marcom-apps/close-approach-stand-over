@@ -21,31 +21,28 @@
     return workingDays;
   }
 
-  // Base NZ holiday pattern (month-day)
-  const nzHolidays = [
-    "01-01", "01-02", "02-06", "04-25", "06-01", "10-28", "12-25", "12-26",
-    "06-20", "07-10", "06-25", "07-14", "07-06" // Matariki rolling dates
+  // Base NZ holiday pattern (month-day) + rolling Matariki dates
+  const nzFixedHolidays = [
+    "01-01", "01-02", "02-06", "04-25", "06-01", "10-28", "12-25", "12-26"
+  ];
+  const nzMatarikiDates = [
+    "2025-06-20", "2026-07-10", "2027-06-25", "2028-07-14", "2029-07-06"
   ];
 
   function getHolidayDatesIndefinitely() {
     const holidays = new Set();
-    const yearStart = new Date().getFullYear();
-    for (let year = yearStart; year <= yearStart + 20; year++) {
-      nzHolidays.forEach(md => {
-        if (md.match(/^\d{2}-\d{2}$/)) {
-          holidays.add(`${year}-${md}`);
-        } else if (md.match(/^\d{2}-\d{2}$/)) {
-          holidays.add(`${year}-${md}`);
-        } else {
-          holidays.add(`${md}`); // already in YYYY-MM-DD format
-        }
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y <= currentYear + 20; y++) {
+      nzFixedHolidays.forEach(md => {
+        holidays.add(`${y}-${md}`);
       });
     }
+    nzMatarikiDates.forEach(fullDate => holidays.add(fullDate));
     return Array.from(holidays);
   }
 
-  const blocked = getNextWorkingDays(getBlockedWorkingDayCount());
-  const minDateObj = new Date(blocked[blocked.length - 1]);
+  const blockedWorkdays = getNextWorkingDays(getBlockedWorkingDayCount());
+  const minDateObj = new Date(blockedWorkdays[blockedWorkdays.length - 1]);
   minDateObj.setDate(minDateObj.getDate() + 1);
   const minDateStr = formatDate(minDateObj);
   const holidays = getHolidayDatesIndefinitely();
@@ -54,10 +51,10 @@
     const ymd = formatDate(date);
     const day = date.getDay();
     return (
-      day === 0 ||
-      day === 6 ||
+      day === 0 || // Sunday
+      day === 6 || // Saturday
       ymd < minDateStr ||
-      blocked.includes(ymd) ||
+      blockedWorkdays.includes(ymd) ||
       holidays.includes(ymd)
     );
   }
@@ -73,7 +70,7 @@
         dateFormat: "Y-m-d",
         disable: [
           function (date) {
-            return isBlocked(date);
+            return isBlocked(date); // must return true to disable
           }
         ],
         onChange: function (selectedDates, dateStr) {
@@ -81,7 +78,6 @@
         }
       });
 
-      // backup in case iframe resize is slow
       setTimeout(() => {
         JFCustomWidget.requestFrameResize({ height: 350 });
       }, 200);
@@ -91,10 +87,15 @@
       JFCustomWidget.sendSubmit(input.value);
     });
   } else {
-    // fallback for local dev
+    // for testing outside of Jotform
     flatpickr(input, {
       inline: true,
-      dateFormat: "Y-m-d"
+      dateFormat: "Y-m-d",
+      disable: [
+        function (date) {
+          return isBlocked(date);
+        }
+      ]
     });
   }
 })();
