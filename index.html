@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>NZ v4 Workday & Holiday Blocker</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <title>Workday Picker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css" />
   <style>
     html, body {
       margin: 0;
       padding: 10px;
       font-family: sans-serif;
-      height: auto;
       overflow: hidden;
     }
 
@@ -20,16 +19,16 @@
       box-sizing: border-box;
     }
 
-    .flatpickr-calendar {
+    .pika-single {
       z-index: 9999 !important;
     }
   </style>
 </head>
 <body>
-  <input type="text" id="calendar" placeholder="Select a date v4" />
+  <input type="text" id="calendar" placeholder="Select a date" />
 
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
   <script src="widget.js"></script>
 </body>
 </html>
