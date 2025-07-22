@@ -21,26 +21,34 @@
     return workingDays;
   }
 
+  // Base NZ holiday pattern (month-day)
   const nzHolidays = [
     "01-01", "01-02", "02-06", "04-25", "06-01", "10-28", "12-25", "12-26",
-    "2025-06-20", "2026-07-10", "2027-06-25", "2028-07-14", "2029-07-06"
+    "06-20", "07-10", "06-25", "07-14", "07-06" // Matariki rolling dates
   ];
 
-  function getHolidayDates() {
-    const baseYear = new Date().getFullYear();
-    const holidays = [];
-    for (let i = 0; i < 5; i++) {
-      const y = baseYear + i;
-      nzHolidays.forEach(h => holidays.push(h.length === 5 ? `${y}-${h}` : h));
+  function getHolidayDatesIndefinitely() {
+    const holidays = new Set();
+    const yearStart = new Date().getFullYear();
+    for (let year = yearStart; year <= yearStart + 20; year++) {
+      nzHolidays.forEach(md => {
+        if (md.match(/^\d{2}-\d{2}$/)) {
+          holidays.add(`${year}-${md}`);
+        } else if (md.match(/^\d{2}-\d{2}$/)) {
+          holidays.add(`${year}-${md}`);
+        } else {
+          holidays.add(`${md}`); // already in YYYY-MM-DD format
+        }
+      });
     }
-    return holidays;
+    return Array.from(holidays);
   }
 
   const blocked = getNextWorkingDays(getBlockedWorkingDayCount());
   const minDateObj = new Date(blocked[blocked.length - 1]);
   minDateObj.setDate(minDateObj.getDate() + 1);
   const minDateStr = formatDate(minDateObj);
-  const holidays = getHolidayDates();
+  const holidays = getHolidayDatesIndefinitely();
 
   function isBlocked(date) {
     const ymd = formatDate(date);
@@ -73,7 +81,7 @@
         }
       });
 
-      // default height fallback in case of iframe delay
+      // backup in case iframe resize is slow
       setTimeout(() => {
         JFCustomWidget.requestFrameResize({ height: 350 });
       }, 200);
@@ -83,7 +91,7 @@
       JFCustomWidget.sendSubmit(input.value);
     });
   } else {
-    // fallback for local testing
+    // fallback for local dev
     flatpickr(input, {
       inline: true,
       dateFormat: "Y-m-d"
