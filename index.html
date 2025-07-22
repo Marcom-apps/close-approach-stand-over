@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Workday Picker</title>
+  <title>5-Workday Notice Calendar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css" />
   <style>
     html, body {
@@ -12,20 +12,29 @@
       overflow: hidden;
     }
 
-    #calendar {
-      width: 100%;
-      padding: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
+    #calendar-container {
+      margin-top: 10px;
     }
 
     .pika-single {
-      z-index: 9999 !important;
+      position: relative !important;
+      display: block !important;
+      z-index: 1;
+    }
+
+    .pika-day.is-disabled {
+      background: #f5f5f5 !important;
+      color: #ccc !important;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <input type="text" id="calendar" placeholder="Select a date" />
+  <div>
+    <label for="calendar">Choose a date (5 working days' notice required):</label>
+    <input type="text" id="calendar" readonly style="margin-top: 6px; padding: 6px; width: 100%;" />
+    <div id="calendar-container"></div>
+  </div>
 
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
