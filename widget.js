@@ -42,57 +42,61 @@
   const minDateStr = formatDate(minDateObj);
   const holidays = getHolidayDates();
 
-  const disableDates = [
-    function (date) {
-      const ymd = formatDate(date);
-      return (
-        date.getDay() === 0 ||
-        date.getDay() === 6 ||
-        ymd < minDateStr ||
-        blocked.includes(ymd) ||
-        holidays.includes(ymd)
-      );
-    }
-  ];
+  function isBlocked(date) {
+    const ymd = formatDate(date);
+    const day = date.getDay();
+    return (
+      day === 0 ||
+      day === 6 ||
+      ymd < minDateStr ||
+      blocked.includes(ymd) ||
+      holidays.includes(ymd)
+    );
+  }
+
+  function disableWeekendsAndHolidays(date) {
+    return isBlocked(date) ? false : true;
+  }
+
+  function resizeUp() {
+    JFCustomWidget.requestFrameResize({ height: 300 });
+  }
+
+  function resizeDown() {
+    JFCustomWidget.requestFrameResize({ height: 40 });
+  }
 
   const input = document.getElementById("calendar");
 
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.subscribe("ready", function () {
-      // Force initial collapse
-      JFCustomWidget.requestFrameResize({ height: 40 });
+      resizeDown();
 
-      // Backup force after delay
-      setTimeout(() => {
-        JFCustomWidget.requestFrameResize({ height: 40 });
-      }, 300);
-
-      flatpickr(input, {
-        disable: disableDates,
-        dateFormat: "Y-m-d",
-
-        onOpen: function () {
-          JFCustomWidget.requestFrameResize({ height: 280 });
+      const picker = new Pikaday({
+        field: input,
+        format: "YYYY-MM-DD",
+        minDate: new Date(minDateStr),
+        toString(date) {
+          return formatDate(date);
         },
-
-        onClose: function () {
-          JFCustomWidget.requestFrameResize({ height: 40 });
+        disableDayFn: function (date) {
+          return isBlocked(date);
         },
-
-        onChange: function (selectedDates, dateStr) {
-          JFCustomWidget.sendData(dateStr);
+        onOpen: resizeUp,
+        onClose: resizeDown,
+        onSelect(date) {
+          const formatted = formatDate(date);
+          input.value = formatted;
+          JFCustomWidget.sendData(formatted);
         }
       });
+
+      // backup resize
+      setTimeout(resizeDown, 300);
     });
 
     JFCustomWidget.onSubmit(function () {
       JFCustomWidget.sendSubmit(input.value);
-    });
-  } else {
-    // Fallback for local testing
-    flatpickr(input, {
-      disable: disableDates,
-      dateFormat: "Y-m-d"
     });
   }
 })();
