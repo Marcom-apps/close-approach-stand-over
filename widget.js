@@ -1,7 +1,9 @@
 (function () {
   function formatDateISO(date) {
-    const iso = new Date(date.toLocaleString("en-US", { timeZone: "Pacific/Auckland" }));
-    return iso.toISOString().split("T")[0]; // YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = (`0${date.getMonth() + 1}`).slice(-2);
+    const day = (`0${date.getDate()}`).slice(-2);
+    return `${year}-${month}-${day}`; // Local-safe YYYY-MM-DD
   }
 
   function getBlockedWorkingDayCount() {
@@ -32,7 +34,6 @@
   ];
 
   const variableHolidays = [
-    "2025-06-20",
     "2026-04-03", "2026-04-06", "2026-06-01", "2026-07-10", "2026-10-26",
     "2027-03-26", "2027-03-29", "2027-06-07", "2027-06-25", "2027-10-23",
     "2028-04-14", "2028-04-17", "2028-06-05", "2028-07-14", "2028-10-22",
