@@ -59,26 +59,30 @@
 
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.subscribe("ready", function () {
-      JFCustomWidget.requestFrameResize({ height: 40 }); // Initial collapsed height
+      // Force initial collapsed height
+      JFCustomWidget.requestFrameResize({ height: 40 });
+
+      // Extra failsafe in case Jotform overrides it
+      setTimeout(() => {
+        JFCustomWidget.requestFrameResize({ height: 40 });
+      }, 200);
 
       flatpickr(input, {
         disable: disableDates,
         dateFormat: "Y-m-d",
 
         onOpen: function () {
-          JFCustomWidget.requestFrameResize({ height: 360 }); // Expand for calendar
+          JFCustomWidget.requestFrameResize({ height: 360 });
         },
 
         onClose: function () {
-          JFCustomWidget.requestFrameResize({ height: 40 }); // Collapse
+          JFCustomWidget.requestFrameResize({ height: 40 });
         },
 
         onChange: function (selectedDates, dateStr) {
           JFCustomWidget.sendData(dateStr);
         }
       });
-
-      JFCustomWidget.setHeight(40); // Safe initial height
     });
 
     JFCustomWidget.onSubmit(function () {
