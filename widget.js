@@ -59,20 +59,20 @@
 
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.subscribe("ready", function () {
-      // Force initial collapsed height
+      // Force initial collapse
       JFCustomWidget.requestFrameResize({ height: 40 });
 
-      // Extra failsafe in case Jotform overrides it
+      // Backup force after delay
       setTimeout(() => {
         JFCustomWidget.requestFrameResize({ height: 40 });
-      }, 200);
+      }, 300);
 
       flatpickr(input, {
         disable: disableDates,
         dateFormat: "Y-m-d",
 
         onOpen: function () {
-          JFCustomWidget.requestFrameResize({ height: 360 });
+          JFCustomWidget.requestFrameResize({ height: 280 });
         },
 
         onClose: function () {
