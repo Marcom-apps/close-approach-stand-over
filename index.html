@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>5-Workday Notice Calendar</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <style>
     html, body {
       margin: 0;
@@ -12,32 +12,38 @@
       overflow: hidden;
     }
 
-    #calendar-container {
-      margin-top: 10px;
+    #calendar {
+      padding: 8px;
+      font-size: 16px;
+      width: 100%;
+      margin-bottom: 10px;
     }
 
-    .pika-single {
-      position: relative !important;
+    .flatpickr-calendar {
       display: block !important;
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      visibility: visible !important;
       z-index: 1;
     }
 
-    .pika-day.is-disabled {
-      background: #f5f5f5 !important;
-      color: #ccc !important;
-      pointer-events: none;
+    .flatpickr-innerContainer {
+      display: block;
+    }
+
+    .flatpickr-wrapper {
+      display: inline-block;
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <div>
-    <label for="calendar">Choose a date (5 working days' notice required):</label>
-    <input type="text" id="calendar" readonly style="margin-top: 6px; padding: 6px; width: 100%;" />
-    <div id="calendar-container"></div>
-  </div>
+  <label for="calendar">Choose a date (5 working days' notice required):</label>
+  <input type="text" id="calendar" readonly />
 
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="widget.js"></script>
 </body>
 </html>
