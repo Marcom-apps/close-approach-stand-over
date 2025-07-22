@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>5 v3 Workday Notice Calendar</title>
+  <title>NZ v4 Workday & Holiday Blocker</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <style>
     html, body {
@@ -13,19 +13,11 @@
       overflow: hidden;
     }
 
-    #calendar-wrapper {
-      display: flex;
-      flex-direction: column;
-    }
-
     #calendar {
       width: 100%;
       padding: 8px;
       font-size: 16px;
-    }
-
-    .fp-open {
-      z-index: 99999 !important; /* Forces dropdown to appear above everything */
+      box-sizing: border-box;
     }
 
     .flatpickr-calendar {
@@ -34,9 +26,7 @@
   </style>
 </head>
 <body>
-  <div id="calendar-wrapper">
-    <input id="calendar" type="text" placeholder="Select a date v3" />
-  </div>
+  <input type="text" id="calendar" placeholder="Select a date v4" />
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
