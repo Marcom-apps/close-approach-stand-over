@@ -2,27 +2,41 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>5 v2 Workday Notice Calendar</title>
+  <title>5 v3 Workday Notice Calendar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <style>
     html, body {
       margin: 0;
       padding: 10px;
       font-family: sans-serif;
-      height: 100%;
-      overflow: hidden; /* prevents scrollbar from flickering on open/close */
+      height: auto;
+      overflow: hidden;
+    }
+
+    #calendar-wrapper {
+      display: flex;
+      flex-direction: column;
     }
 
     #calendar {
       width: 100%;
       padding: 8px;
       font-size: 16px;
-      box-sizing: border-box;
+    }
+
+    .fp-open {
+      z-index: 99999 !important; /* Forces dropdown to appear above everything */
+    }
+
+    .flatpickr-calendar {
+      z-index: 9999 !important;
     }
   </style>
 </head>
 <body>
-  <input id="calendar" type="text" placeholder="Select a date v2.1" />
+  <div id="calendar-wrapper">
+    <input id="calendar" type="text" placeholder="Select a date v2.1" />
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
