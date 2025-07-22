@@ -10,9 +10,8 @@
       padding: 10px;
       font-family: Inter, Roboto, sans-serif;
       font-size: 14px;
-      overflow: hidden;
+      background: #fff;
       color: #2c3345;
-      background-color: #fff;
     }
 
     label {
@@ -33,34 +32,19 @@
       outline: none;
     }
 
-    #calendar:focus {
-      border-color: #4a90e2;
-      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-    }
-
     .flatpickr-calendar {
       display: block !important;
       position: relative !important;
-      top: auto !important;
-      left: auto !important;
       visibility: visible !important;
       z-index: 2;
       margin-top: 8px;
-    }
-
-    .flatpickr-wrapper {
-      width: 100%;
-    }
-
-    .flatpickr-innerContainer {
-      display: block;
     }
   </style>
 </head>
 <body>
   <label for="calendar">Choose a date (5 working days' notice required):</label>
   <input type="text" id="calendar" readonly />
-  
+
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="widget.js"></script>
