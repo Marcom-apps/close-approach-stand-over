@@ -54,49 +54,40 @@
     );
   }
 
-  function disableWeekendsAndHolidays(date) {
-    return isBlocked(date) ? false : true;
-  }
-
-  function resizeUp() {
-    JFCustomWidget.requestFrameResize({ height: 300 });
-  }
-
-  function resizeDown() {
-    JFCustomWidget.requestFrameResize({ height: 40 });
-  }
-
-  const input = document.getElementById("calendar");
+  const calendarInput = document.getElementById("calendar");
 
   if (typeof JFCustomWidget !== "undefined") {
     JFCustomWidget.subscribe("ready", function () {
-      resizeDown();
+      JFCustomWidget.requestFrameResize({ height: 340 });
 
       const picker = new Pikaday({
-        field: input,
+        field: calendarInput,
+        trigger: calendarInput, // required but unused since static
+        bound: false,
+        container: document.getElementById("calendar-container"),
         format: "YYYY-MM-DD",
         minDate: new Date(minDateStr),
-        toString(date) {
-          return formatDate(date);
-        },
         disableDayFn: function (date) {
           return isBlocked(date);
         },
-        onOpen: resizeUp,
-        onClose: resizeDown,
-        onSelect(date) {
+        onSelect: function (date) {
           const formatted = formatDate(date);
-          input.value = formatted;
+          calendarInput.value = formatted;
           JFCustomWidget.sendData(formatted);
         }
       });
-
-      // backup resize
-      setTimeout(resizeDown, 300);
     });
 
     JFCustomWidget.onSubmit(function () {
-      JFCustomWidget.sendSubmit(input.value);
+      JFCustomWidget.sendSubmit(calendarInput.value);
+    });
+  } else {
+    // local dev preview
+    new Pikaday({
+      field: calendarInput,
+      bound: false,
+      container: document.getElementById("calendar-container"),
+      format: "YYYY-MM-DD"
     });
   }
 })();
