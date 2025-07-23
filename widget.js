@@ -1,120 +1,84 @@
-(function () {
-  function formatDateISO(date) {
-    const year = date.getFullYear();
-    const month = (`0${date.getMonth() + 1}`).slice(-2);
-    const day = (`0${date.getDate()}`).slice(-2);
-    return `${year}-${month}-${day}`; // Local-safe YYYY-MM-DD
-  }
+// widget.js
 
-  function getBlockedWorkingDayCount() {
-    const nzHour = new Date().toLocaleString("en-NZ", {
-      hour: "numeric",
-      hour12: false,
-      timeZone: "Pacific/Auckland"
-    });
-    return parseInt(nzHour, 10) < 8 ? 6 : 5;
-  }
+function toISODate(d) {
+  const z = n => ('0' + n).slice(-2);
+  return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+}
 
-  function getNextWorkingDaysISO(count) {
-    const workingDays = [];
-    let current = new Date();
-    while (workingDays.length < count) {
-      current.setDate(current.getDate() + 1);
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) {
-        workingDays.push(formatDateISO(new Date(current)));
-      }
+function getNZNow() {
+  const now = new Date();
+  const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+  const offset = isNZDST(now) ? 13 : 12; // UTC+13 in DST, otherwise UTC+12
+  return new Date(utcTime + offset * 3600000);
+}
+
+function isNZDST(date) {
+  const year = date.getFullYear();
+  const start = new Date(Date.UTC(year, 8, 30));
+  start.setDate(start.getDate() + (7 - start.getUTCDay()) % 7);
+  const end = new Date(Date.UTC(year, 3, 2));
+  end.setDate(end.getDate() - end.getUTCDay());
+  return date >= start && date < end;
+}
+
+function getNextWeekdaysIncludingToday(startDate, count) {
+  const disabled = [];
+  let date = new Date(startDate);
+  while (disabled.length < count) {
+    if (date.getDay() !== 0 && date.getDay() !== 6) {
+      disabled.push(toISODate(date));
     }
-    return workingDays;
+    date.setDate(date.getDate() + 1);
   }
+  return disabled;
+}
 
-  const fixedHolidayDMYs = [
-    "01-01", "02-01", "06-02", "18-04", "21-04", "25-04",
-    "02-06", "28-06", "27-10", "25-12", "26-12"
+function getFixedNZHolidays(year) {
+  return [
+    `01-01`, `02-06`, `04-25`, `12-25`, `12-26`
+  ].map(d => `${year}-${d}`);
+}
+
+function getVariableNZHolidays() {
+  return [
+    "2026-04-03", "2026-04-06", "2026-06-01", "2026-10-26", "2026-07-17",
+    "2027-03-26", "2027-03-29", "2027-06-07", "2027-10-25", "2027-07-09",
+    "2028-04-14", "2028-04-17", "2028-06-05", "2028-10-23", "2028-06-28",
+    "2029-03-30", "2029-04-02", "2029-06-04", "2029-10-22", "2029-07-06",
+    "2030-04-19", "2030-04-22", "2030-06-03", "2030-10-28", "2030-06-21",
+    "2031-04-11", "2031-04-14", "2031-06-02", "2031-10-27", "2031-07-11",
+    "2032-03-26", "2032-03-29", "2032-06-07", "2032-10-25", "2032-07-02",
+    "2033-04-15", "2033-04-18", "2033-06-06", "2033-10-24", "2033-06-24",
+    "2034-04-07", "2034-04-10", "2034-06-05", "2034-10-23", "2034-07-07",
+    "2035-03-23", "2035-03-26", "2035-06-04", "2035-10-22", "2035-06-22",
+    "2036-04-11", "2036-04-14", "2036-06-02", "2036-10-27", "2036-07-11",
+    "2037-04-03", "2037-04-06", "2037-06-01", "2037-10-26", "2037-06-26",
+    "2038-04-23", "2038-04-26", "2038-06-07", "2038-10-25", "2038-07-16",
+    "2039-04-08", "2039-04-11", "2039-06-06", "2039-10-24", "2039-07-01",
+    "2040-03-30", "2040-04-02", "2040-06-04", "2040-10-22", "2040-06-20",
+    "2041-04-19", "2041-04-22", "2041-06-03", "2041-10-28", "2041-07-12",
+    "2042-04-04", "2042-04-07", "2042-06-02", "2042-10-27", "2042-06-27",
+    "2043-03-27", "2043-03-30", "2043-06-01", "2043-10-26", "2043-07-10",
+    "2044-04-15", "2044-04-18", "2044-06-06", "2044-10-24", "2044-06-30",
+    "2045-03-31", "2045-04-03", "2045-06-05", "2045-10-23", "2045-07-14"
   ];
+}
 
-  const variableHolidays = [
-    "2026-04-03", "2026-04-06", "2026-06-01", "2026-07-10", "2026-10-26",
-    "2027-03-26", "2027-03-29", "2027-06-07", "2027-06-25", "2027-10-23",
-    "2028-04-14", "2028-04-17", "2028-06-05", "2028-07-14", "2028-10-22",
-    "2029-04-06", "2029-04-08", "2029-06-04", "2029-07-06", "2029-10-28",
-    "2030-03-29", "2030-04-01", "2030-06-03", "2030-06-21", "2030-10-28",
-    "2031-04-18", "2031-04-21", "2031-06-02", "2031-07-11", "2031-10-27",
-    "2032-04-10", "2032-04-12", "2032-06-01", "2032-07-02", "2032-10-26",
-    "2033-04-01", "2033-04-03", "2033-06-07", "2033-06-24", "2033-10-24",
-    "2034-04-21", "2034-04-23", "2034-06-05", "2034-07-07", "2034-10-23",
-    "2035-04-13", "2035-04-15", "2035-06-04", "2035-06-29", "2035-10-22",
-    "2036-03-28", "2036-03-30", "2036-06-02", "2036-07-18", "2036-10-27",
-    "2037-04-16", "2037-04-19", "2037-06-01", "2037-07-10", "2037-10-26",
-    "2038-04-08", "2038-04-11", "2038-06-07", "2038-06-25", "2038-10-25",
-    "2039-03-31", "2039-04-03", "2039-06-06", "2039-07-15", "2039-10-23",
-    "2040-04-20", "2040-04-22", "2040-06-04", "2040-07-06", "2040-10-22",
-    "2041-04-04", "2041-04-07", "2041-06-02", "2041-07-19", "2041-10-27",
-    "2042-03-27", "2042-03-30", "2042-06-01", "2042-07-11", "2042-10-26",
-    "2043-04-16", "2043-04-19", "2043-06-07", "2043-07-03", "2043-10-25",
-    "2044-04-07", "2044-04-10", "2044-06-05", "2044-06-24", "2044-10-23",
-    "2045-03-30", "2045-04-02", "2045-06-04", "2045-07-13", "2045-10-22"
-  ];
+const now = getNZNow();
+const before8am = now.getHours() < 8;
+const disabledWeekdays = getNextWeekdaysIncludingToday(now, before8am ? 5 : 6);
+const fixedHolidays = Array.from({ length: 20 }, (_, i) => getFixedNZHolidays(now.getFullYear() + i)).flat();
+const allDisabled = new Set([...disabledWeekdays, ...fixedHolidays, ...getVariableNZHolidays()]);
 
-  function dmyToISO(dmy) {
-    const [day, month, year] = dmy.split("-");
-    return `${year}-${month}-${day}`;
-  }
-
-  function getAllBlockedHolidayISOs() {
-    const holidays = new Set();
-    const currentYear = new Date().getFullYear();
-    for (let y = currentYear; y <= 2045; y++) {
-      fixedHolidayDMYs.forEach(dmy => holidays.add(dmyToISO(`${dmy}-${y}`)));
+flatpickr("#calendar", {
+  inline: true,
+  disable: [
+    function(date) {
+      return allDisabled.has(toISODate(date)) || date.getDay() === 0 || date.getDay() === 6;
     }
-    variableHolidays.forEach(date => holidays.add(date));
-    return Array.from(holidays);
+  ],
+  dateFormat: "l, d F Y",
+  locale: {
+    firstDayOfWeek: 1
   }
-
-  const holidaysISO = getAllBlockedHolidayISOs();
-  const blockedWorkdaysISO = getNextWorkingDaysISO(getBlockedWorkingDayCount());
-  const minDateISO = blockedWorkdaysISO[blockedWorkdaysISO.length - 1];
-
-  function isBlocked(date) {
-    const iso = formatDateISO(date);
-    const day = date.getDay();
-    return (
-      day === 0 ||
-      day === 6 ||
-      iso < minDateISO ||
-      blockedWorkdaysISO.includes(iso) ||
-      holidaysISO.includes(iso)
-    );
-  }
-
-  const input = document.getElementById("calendar");
-
-  if (typeof JFCustomWidget !== "undefined") {
-    JFCustomWidget.subscribe("ready", function () {
-      JFCustomWidget.requestFrameResize({ height: 350 });
-
-      flatpickr(input, {
-        inline: true,
-        dateFormat: "d-m-Y",
-        disable: [isBlocked],
-        onChange: function (selectedDates, dateStr) {
-          JFCustomWidget.sendData(dateStr);
-        }
-      });
-
-      setTimeout(() => {
-        JFCustomWidget.requestFrameResize({ height: 350 });
-      }, 200);
-    });
-
-    JFCustomWidget.onSubmit(function () {
-      JFCustomWidget.sendSubmit(input.value);
-    });
-  } else {
-    flatpickr(input, {
-      inline: true,
-      dateFormat: "d-m-Y",
-      disable: [isBlocked]
-    });
-  }
-})();
+});
