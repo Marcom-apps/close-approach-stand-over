@@ -82,3 +82,7 @@ flatpickr("#calendar", {
     firstDayOfWeek: 1
   }
 });
+JFCustomWidget.subscribe("ready", function(){
+  var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
+  document.getElementById('labelText').innerHTML = label;
+});
