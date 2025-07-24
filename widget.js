@@ -77,7 +77,7 @@ flatpickr("#calendar", {
       return allDisabled.has(toISODate(date)) || date.getDay() === 0 || date.getDay() === 6;
     }
   ],
-  dateFormat: "l, d F Y",
+  dateFormat: "d/m/Y",
   locale: {
     firstDayOfWeek: 1
   }
