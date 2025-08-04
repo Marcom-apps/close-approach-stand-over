@@ -8,30 +8,22 @@ function toISODate(d) {
 function getNZNow() {
   const now = new Date();
   const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+  // Determine if NZ is currently in Daylight Saving Time
   const offset = isNZDST(now) ? 13 : 12; // UTC+13 in DST, otherwise UTC+12
   return new Date(utcTime + offset * 3600000);
 }
 
 function isNZDST(date) {
   const year = date.getFullYear();
+  // DST starts last Sunday in September
   const start = new Date(Date.UTC(year, 8, 30));
   start.setDate(start.getDate() + (7 - start.getUTCDay()) % 7);
-  const end = new Date(Date.UTC(year, 3, 2));
-  end.setDate(end.getDate() - end.getUTCDay());
-  return date >= start && date < end;
+  // DST ends first Sunday in April
+  const end = new Date(Date.UTC(year, 3, 1)); // Start of April
+  end.setDate(end.getDate() + (7 - end.getUTCDay()) % 7); // First Sunday in April
+  return date >= start || date < end; // Corrected DST logic: if date is after start OR before end (for the next year's start)
 }
 
-function getNextWeekdaysIncludingToday(startDate, count) {
-  const disabled = [];
-  let date = new Date(startDate);
-  while (disabled.length < count) {
-    if (date.getDay() !== 0 && date.getDay() !== 6) {
-      disabled.push(toISODate(date));
-    }
-    date.setDate(date.getDate() + 1);
-  }
-  return disabled;
-}
 
 function getFixedNZHolidays(year) {
   return [
@@ -64,24 +56,90 @@ function getVariableNZHolidays() {
   ];
 }
 
+function getNextWeekdaysIncludingToday(startDate, count) {
+  const disabled = new Set();
+  let date = new Date(startDate);
+  // Ensure we start checking from the current day or the next day
+  // depending on whether we want to include today in the count of "next weekdays" for disabling.
+  // For the purpose of "notice period", we want to disable a certain number of upcoming weekdays *from* today.
+
+  let daysCounted = 0;
+  while (daysCounted < count) {
+    if (date.getDay() !== 0 && date.getDay() !== 6) { // If it's a weekday
+      disabled.add(toISODate(date));
+      daysCounted++;
+    }
+    date.setDate(date.getDate() + 1);
+  }
+  return Array.from(disabled);
+}
+
+
+// --- Main Logic ---
+
 const now = getNZNow();
+const todayNZ = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Today's date in NZT, stripped of time
 const before8am = now.getHours() < 8;
-const disabledWeekdays = getNextWeekdaysIncludingToday(now, before8am ? 5 : 6);
-const fixedHolidays = Array.from({ length: 20 }, (_, i) => getFixedNZHolidays(now.getFullYear() + i)).flat();
-const allDisabled = new Set([...disabledWeekdays, ...fixedHolidays, ...getVariableNZHolidays()]);
+
+// Calculate disabled weekdays for the notice period
+// If it's before 8 AM, disable today and the next 1 weekdays (total 2).
+// If it's after 8 AM, disable today and the next 2 weekdays (total 3).
+const disabledWeekdays = getNextWeekdaysIncludingToday(now, before8am ? 1 : 2);
+
+// Get all fixed and variable NZ holidays for the current and upcoming years
+const fixedHolidays = Array.from({ length: 2 }, (_, i) => getFixedNZHolidays(now.getFullYear() + i)).flat(); // Check current and next year
+const variableHolidays = getVariableNZHolidays();
+
+// Combine all disabled dates into a single Set for efficient lookup
+const allDisabledDatesSet = new Set([...disabledWeekdays, ...fixedHolidays, ...variableHolidays]);
+
+function getNextAvailableDateForSelection() {
+  let date = new Date(todayNZ); // Start checking from today
+  const maxCheckDays = 365 * 2; // Check up to two years to find an available date
+
+  for (let i = 0; i < maxCheckDays; i++) {
+    const testDate = new Date(date);
+    testDate.setDate(date.getDate() + i); // Increment day
+
+    const iso = toISODate(testDate);
+    const isWeekend = testDate.getDay() === 0 || testDate.getDay() === 6;
+    const isHolidayOrNoticePeriod = allDisabledDatesSet.has(iso);
+
+    // A date is available if it's not a weekend and not marked as disabled (holiday or notice period)
+    if (!isWeekend && !isHolidayOrNoticePeriod) {
+      return testDate;
+    }
+  }
+  return null; // Fallback if no date is found within the maxCheckDays
+}
+
+const nextAvailableDateToSet = getNextAvailableDateForSelection();
+
 
 flatpickr("#calendar", {
   inline: true,
   disable: [
     function(date) {
-      return allDisabled.has(toISODate(date)) || date.getDay() === 0 || date.getDay() === 6;
+      const isPastDate = date < todayNZ; // This must reference the NZ-adjusted date
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      const isHolidayOrNoticePeriod = allDisabledDatesSet.has(toISODate(date));
+      return isPastDate || isWeekend || isHolidayOrNoticePeriod;
     }
   ],
   dateFormat: "d/m/Y",
+  defaultDate: nextAvailableDateToSet,
   locale: {
     firstDayOfWeek: 1
+  },
+  onReady: function(selectedDates, dateStr, instance) {
+    if (nextAvailableDateToSet) {
+      instance.jumpToDate(nextAvailableDateToSet);
+      instance.setDate(nextAvailableDateToSet, true); // This sets the input value
+    }
   }
 });
+
+
 JFCustomWidget.subscribe("ready", function(){
   var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
   document.getElementById('labelText').innerHTML = label;
