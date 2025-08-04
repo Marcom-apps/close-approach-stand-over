@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>5-Workday Notice Calendar</title>
+  <title>1-Workday Notice Calendar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <style>
     html, body {
@@ -40,15 +40,20 @@ body {
       z-index: 2;
       margin-top: 8px;
     }
+
+.flatpickr-calendar {
+  margin-top: 4px !important; /* reduce space below the input */
+  top: auto !important;
+}
   </style>
 </head>
 <body>
 
-   <h2 id="labelText">Loading...</h2>
-  <input type="text" id="calendar" readonly />
+<input type="text" id="calendar" />
 
   <script src="https://cdn.jotfor.ms/widgets/main.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="widget.js"></script>
 </body>
 </html>
+
